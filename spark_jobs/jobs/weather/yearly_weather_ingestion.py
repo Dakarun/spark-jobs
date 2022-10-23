@@ -13,8 +13,7 @@ DOWNLOAD_PATH = "/tmp/annual_weather_{}.csv.gz"
 JOB_CONFIG = {
     "name": "IngestNOAAAnnualFile",
     "config": {
-        "spark.sql.sources.partitionOverwriteMode": "dynamic",
-        "spark.hadoop.fs.s3a.aws.credentials.provider": "org.apache.hadoop.fs.s3a.TemporaryAWSCredentialsProvider"
+        "spark.sql.sources.partitionOverwriteMode": "dynamic"
     },
     "jars": [],
 }
@@ -33,6 +32,8 @@ def string_to_bool(value: str) -> bool:
 
 
 if __name__ == "__main__":
+    db = "weather_raw"
+    table = "yearly_station_raw"
     job_year = sys.argv[1]
     file_path = DOWNLOAD_PATH.format(job_year)
 
@@ -60,16 +61,19 @@ if __name__ == "__main__":
     ])
 
     print("Reading data")
-    print(spark.conf.get("spark.hadoop.fs.s3a.aws.credentials.provider"))
-    ddf = spark.sql("CREATE DATABASE IF NOT EXISTS weather LOCATION 's3a://databrewing-structured-data/weather/'")
-    ddf.show()
-    print(ddf.count())
+    spark.sql(f"CREATE DATABASE IF NOT EXISTS {db} LOCATION 's3a://databrewing-structured-data/{db}/'")
     df = spark.read.schema(noaa_schema).csv(file_path)
-    df.withColumn("year", f.lit(job_year)) \
-        .write \
-        .partitionBy("year") \
-        .mode("overwrite") \
-        .saveAsTable("weather.yearly_station_raw")
+    if spark.catalog.tableExists(table, db):
+        print("Writing to existing table")
+        df.withColumn("year", f.lit(job_year)) \
+            .write \
+            .mode("overwrite") \
+            .insertInto(f"{db}.{table}")
+    else:
+        print("Creating new table")
+        df.withColumn("year", f.lit(job_year)) \
+            .write \
+            .partitionBy("year") \
+            .mode("overwrite") \
+            .saveAsTable(f"{db}.{table}")
     print("Completed write")
-    import time
-    time.sleep(120)

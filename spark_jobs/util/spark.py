@@ -1,5 +1,3 @@
-import os
-
 from pyspark.conf import SparkConf
 from pyspark.sql import SparkSession
 
@@ -10,13 +8,8 @@ BASE_JARS = [
 
 BASE_CONFIG = {
     "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
-    # "spark.hadoop.fs.s3a.aws.credentials.provider": "com.amazonaws.auth.DefaultAWSCredentialsProviderChain,"
-    #                                                 "org.apache.hadoop.fs.s3a.TemporaryAWSCredentialsProvider,"
-    #                                                 "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider,"
-    #                                                 "com.amazonaws.auth.EnvironmentVariableCredentialsProvider,"
-    #                                                 "org.apache.hadoop.fs.s3a.auth.IAMInstanceCredentialsProvider",
-    "spark.hadoop.fs.s3a.access.key": os.environ["AWS_ACCESS_KEY"],
-    "spark.hadoop.fs.s3a.secret.key": os.environ["AWS_SECRET_KEY"],
+    "spark.hadoop.fs.s3a.aws.credentials.provider": "com.amazonaws.auth.DefaultAWSCredentialsProviderChain",
+    "spark.sql.adaptive.enabled": "true",
     "hive.metastore.uris": "thrift://localhost:9083",
     "spark.sql.hive.metastore.version": "3.1.0",
     "spark.sql.hive.metastore.jars": "path",  # If you have it try to download it from maven/run hive 3.1.0's jars it'll fail since it's not compatible with java 11. Instead path will look at an empty value
